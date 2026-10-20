@@ -9,6 +9,15 @@ pipeline {
         APP_PORT          = '8085'
     }
 
+    
+    agent {
+        docker {
+            image 'maven:3.8.6-openjdk-17'
+            args '-v /root/.m2:/root/.m2'
+        }
+    }
+   
+
     stages {
         // =========================================================================
         // ETAPA 1: PRUEBAS Y COBERTURA DE CODIGO (JACOCO)
