@@ -101,47 +101,40 @@ stage('Publicacion en Nexus') {
         // =========================================================================
        
 
-        stage('Despliegue Continuo (CD)') {
-            steps {
-                echo "Desplegando ${IMAGE_NAME}:${BUILD_NUMBER} en puerto ${APP_PORT}..."
+       
+stage('Despliegue Continuo (CD)') {
+    steps {
+        echo "Desplegando ${IMAGE_NAME}:${BUILD_NUMBER} en puerto ${APP_PORT}..."
 
-                sh """
-                    docker stop product-api-running || true
-                    docker rm product-api-running || true
+        sh """
+            docker stop product-api-running || true
+            docker rm product-api-running || true
 
-                    docker run -d \
-                        --name product-api-running \
-                        --network cicl_network \
-                        -p ${APP_PORT}:8080 \
-                        ${IMAGE_NAME}:${BUILD_NUMBER}
-                """
+            docker run -d --name product-api-running --network cicl_network -p ${APP_PORT}:8080 ${IMAGE_NAME}:${BUILD_NUMBER}
+        """
 
-                echo 'Ejecutando Smoke Test...'
+        echo 'Ejecutando Smoke Test...'
 
-                sh """
-                    i=1
-                    while [ "\\$i" -le 10 ]; do
-                        if curl -s -f --max-time 5 \
-                            http://product-api-running:8080/api/products \
-                            >/dev/null; then
-                            echo "DESPLIEGUE EXITOSO: la API responde."
-                            exit 0
-                        fi
+        sh '''
+            i=1
+            while [ "$i" -le 10 ]; do
+                if curl -s -f --max-time 5 http://product-api-running:8080/api/products >/dev/null; then
+                    echo "DESPLIEGUE EXITOSO: la API responde."
+                    exit 0
+                fi
 
-                        echo "Esperando arranque... (intento \\$i de 10)"
-                        sleep 3
-                        i=\\$((i+1))
-                    done
+                echo "Esperando arranque... (intento $i de 10)"
+                sleep 3
+                i=$((i + 1))
+            done
 
-                    echo "ERROR: la API no respondió a tiempo."
-                    docker logs --tail 100 product-api-running || true
-                    exit 1
-                """
-            }
-        }
-
-
+            echo "ERROR: la API no respondió a tiempo."
+            docker logs --tail 100 product-api-running || true
+            exit 1
+        '''
     }
+}
+
 
     post {
         success {
