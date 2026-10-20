@@ -68,7 +68,7 @@ pipeline {
 
 stage('Publicacion en Nexus') {
     steps {
-        echo '===> Publicando artefacto Maven en Nexus...'
+        echo '===> [ETAPA 3] Publicando artefacto Maven en Nexus...'
 
         withCredentials([
             usernamePassword(
@@ -79,7 +79,6 @@ stage('Publicacion en Nexus') {
         ]) {
             dir('backend') {
                 sh '''
-                    set +x
                     mvn -B -s settings.xml deploy -DskipTests
                 '''
             }
