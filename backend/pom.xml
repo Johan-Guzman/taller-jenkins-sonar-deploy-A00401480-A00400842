@@ -87,7 +87,7 @@
         <repository>
             <id>nexus-releases</id>
             <name>Nexus Releases</name>
-            <url>http://127.0.0.1:9181/repository/maven-releases/</url>
+            <url>http://127.0.1.0:9181/repository/maven-releases/</url>
         </repository>
     </distributionManagement>
 </project>
