@@ -65,9 +65,10 @@ pipeline {
         // ETAPA 3: PUBLICACION DE ARTEFACTOS INMUTABLES (NEXUS + DOCKER)
         // =========================================================================
         
+
 stage('Publicacion en Nexus') {
     steps {
-        echo '===> [ETAPA 3] Publicando artefacto Maven en Nexus...'
+        echo '===> Publicando artefacto Maven en Nexus...'
 
         withCredentials([
             usernamePassword(
@@ -79,36 +80,13 @@ stage('Publicacion en Nexus') {
             dir('backend') {
                 sh '''
                     set +x
-
-                    cat > "$WORKSPACE/settings-nexus.xml" <<EOF
-<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0">
-    <servers>
-        <server>
-            <id>nexus-releases</id>
-            <username>${NEXUS_USER}</username>
-            <password>${NEXUS_PASS}</password>
-        </server>
-        <server>
-            <id>nexus-snapshots</id>
-            <username>${NEXUS_USER}</username>
-            <password>${NEXUS_PASS}</password>
-        </server>
-    </servers>
-</settings>
-EOF
-
-                    mvn -B -s "$WORKSPACE/settings-nexus.xml" deploy -DskipTests
+                    mvn -B -s settings.xml deploy -DskipTests
                 '''
             }
         }
     }
-
-    post {
-        always {
-            sh 'rm -f "$WORKSPACE/settings-nexus.xml"'
-        }
-    }
 }
+
 
 
         stage('Empaquetar Imagen Docker') {

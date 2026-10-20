@@ -1,12 +1,15 @@
-<servers>
-    <server>
-        <id>nexus-releases</id>
-        <username>admin</username>
-        <password>admin</password>
-    </server>
-    <server>
-        <id>nexus-snapshots</id>
-        <username>admin</username>
-        <password>admin</password>
-    </server>
-</servers>
+
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0">
+    <servers>
+        <server>
+            <id>nexus-releases</id>
+            <username>${env.NEXUS_USER}</username>
+            <password>${env.NEXUS_PASS}</password>
+        </server>
+        <server>
+            <id>nexus-snapshots</id>
+            <username>${env.NEXUS_USER}</username>
+            <password>${env.NEXUS_PASS}</password>
+        </server>
+    </servers>
+</settings>
