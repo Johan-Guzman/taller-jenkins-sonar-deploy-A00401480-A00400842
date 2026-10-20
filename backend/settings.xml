@@ -1,12 +1,12 @@
 <servers>
     <server>
         <id>nexus-releases</id>
-        <username>jostgu</username>
-        <password>guz123</password>
+        <username>admin</username>
+        <password>admin</password>
     </server>
     <server>
         <id>nexus-snapshots</id>
-        <username>jostgu</username>
-        <password>guz123</password>
+        <username>admin</username>
+        <password>admin</password>
     </server>
 </servers>
