@@ -11,6 +11,8 @@ pipeline {
         PROJECT_KEY = 'product-api'
         IMAGE_NAME = 'product-api'
         APP_PORT = '8085'
+        BRANCH_NAME = 'main'   
+
     }
    
 
@@ -70,7 +72,9 @@ pipeline {
         // ETAPA 3: PUBLICACION DE ARTEFACTOS INMUTABLES (NEXUS + DOCKER)
         // =========================================================================
         stage('Publicacion en Nexus') {
-            
+            when {
+                branch 'main'
+            }
             steps {
                 echo '===> [ETAPA 3] Publicando binario JAR inmutable en Sonatype Nexus OSS...'
                 dir('backend') {
@@ -80,7 +84,9 @@ pipeline {
         }
 
         stage('Empaquetar Imagen Docker') {
-            
+            when {
+                branch 'main'
+            }
             steps {
                 echo "===> [ETAPA 3] Construyendo imagen de contenedor Docker: ${IMAGE_NAME}:${BUILD_NUMBER}..."
                 sh "docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} -t ${IMAGE_NAME}:latest backend/"
@@ -91,7 +97,9 @@ pipeline {
         // ETAPA 4: DESPLIEGUE CONTINUO (CD) Y SMOKE TEST / HEALTHCHECK
         // =========================================================================
         stage('Despliegue Continuo (CD)') {
-            
+            when {
+                branch 'main'
+            }
             steps {
                 echo "===> [ETAPA 4] Desplegando version ${IMAGE_NAME}:${BUILD_NUMBER} en puerto ${APP_PORT}..."
                 sh """
