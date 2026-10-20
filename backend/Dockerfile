@@ -9,7 +9,7 @@ LABEL course="Ingenieria de Software V"
 WORKDIR /app
 
 # Copia el binario empaquetado por Maven
-COPY target/product-api-1.0.4.jar app.jar
+COPY target/product-api-1.0.5.jar app.jar
 
 # Expone el puerto del microservicio
 EXPOSE 8080

@@ -106,14 +106,14 @@ stage('Publicacion en Nexus') {
                 sh """
                     docker stop product-api-running || true
                     docker rm product-api-running || true
-                    docker run -d --name product-api-running -p ${APP_PORT}:8080 ${IMAGE_NAME}:${BUILD_NUMBER}
+                    docker run -d --name product-api-running --network cicl_network -p ${APP_PORT}:8080 ${IMAGE_NAME}:${BUILD_NUMBER}
                 """
 
                 echo '===> [ETAPA 4] Ejecutando Smoke Test / Healthcheck de disponibilidad HTTP...'
                 sh """
                     for i in {1..10}; do
-                        if curl -s -f http://product-api-running:8080/api/products; then
-                            echo "DESPLIEGUE EXITOSO: El microservicio responde correctamente en http://localhost:${APP_PORT}/api/products"
+                        if curl -s -f --max-time 5 http://product-api-running:8080/api/products >/dev/null 2>&1; then
+                            echo "DESPLIEGUE EXITOSO: El microservicio responde correctamente en http://product-api-running:8080/api/products"
                             exit 0
                         fi
                         echo "Esperando arranque del servicio... (intento \$i de 10)"

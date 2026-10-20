@@ -12,7 +12,7 @@
     
     <groupId>com.icesi.ingesoftv</groupId>
     <artifactId>product-api</artifactId>
-    <version>1.0.4</version>
+    <version>1.0.5</version>
     <name>product-api</name>
     <description>API REST de Gestión de Productos - Taller Gobernanza Git, JaCoCo y SonarQube</description>
     
