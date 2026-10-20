@@ -83,11 +83,16 @@
         </plugins>
     </build>
 
-    <distributionManagement>
-        <repository>
-            <id>nexus-releases</id>
-            <name>Nexus Releases</name>
-            <url>http://127.0.1.0:9181/repository/maven-releases/</url>
-        </repository>
-    </distributionManagement>
+  <distributionManagement>
+    <repository>
+        <id>nexus-releases</id>
+        <name>Nexus Releases</name>
+        <url>http://localhost:9181/repository/maven-releases/</url>
+    </repository>
+    <snapshotRepository>
+        <id>nexus-snapshots</id>
+        <name>Nexus Snapshots</name>
+        <url>http://localhost:9181/repository/maven-snapshots/</url>
+    </snapshotRepository>
+</distributionManagement>
 </project>
