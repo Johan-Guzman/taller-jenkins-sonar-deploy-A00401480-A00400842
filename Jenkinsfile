@@ -2,12 +2,21 @@ pipeline {
     agent any
 
     environment {
+        // Nombre del servidor SonarQube configurado en Administrar Jenkins -> System
         SONAR_SERVER_NAME = 'SonarQube-Server'
         PROJECT_KEY       = 'product-api'
         IMAGE_NAME        = 'product-api'
         APP_PORT          = '8085'
-        MAVEN_IMAGE       = 'maven:3.8.6-eclipse-temurin-17'
     }
+
+    
+    agent {
+        docker {
+            image 'maven:3.8.6-openjdk-17'
+            args '-v /root/.m2:/root/.m2'
+        }
+    }
+   
 
     stages {
         // =========================================================================
@@ -17,13 +26,12 @@ pipeline {
             steps {
                 echo '===> [ETAPA 1] Compilando y ejecutando pruebas unitarias e instrumentacion JaCoCo...'
                 dir('backend') {
-                    docker.image("${MAVEN_IMAGE}").inside('-v /root/.m2:/root/.m2') {
-                        sh 'mvn clean verify'
-                    }
+                    sh 'mvn clean verify'
                 }
             }
             post {
                 always {
+                    // Publica reporte visual de pruebas JUnit en la interfaz de Jenkins
                     junit '**/target/surefire-reports/*.xml'
                 }
             }
@@ -37,13 +45,11 @@ pipeline {
                 echo '===> [ETAPA 2] Ejecutando analisis estatico SAST con SonarQube...'
                 dir('backend') {
                     withSonarQubeEnv("${SONAR_SERVER_NAME}") {
-                        docker.image("${MAVEN_IMAGE}").inside('-v /root/.m2:/root/.m2') {
-                            sh """
-                                mvn sonar:sonar \
-                                  -Dsonar.projectKey=${PROJECT_KEY} \
-                                  -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
-                            """
-                        }
+                        sh '''
+                            mvn sonar:sonar \
+                              -Dsonar.projectKey=${PROJECT_KEY} \
+                              -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+                        '''
                     }
                 }
             }
@@ -68,17 +74,21 @@ pipeline {
         // ETAPA 3: PUBLICACION DE ARTEFACTOS INMUTABLES (NEXUS + DOCKER)
         // =========================================================================
         stage('Publicacion en Nexus') {
+            when {
+                branch 'main'
+            }
             steps {
                 echo '===> [ETAPA 3] Publicando binario JAR inmutable en Sonatype Nexus OSS...'
                 dir('backend') {
-                    docker.image("${MAVEN_IMAGE}").inside('-v /root/.m2:/root/.m2') {
-                        sh 'mvn deploy -DskipTests'
-                    }
+                    sh 'mvn deploy -DskipTests'
                 }
             }
         }
 
         stage('Empaquetar Imagen Docker') {
+            when {
+                branch 'main'
+            }
             steps {
                 echo "===> [ETAPA 3] Construyendo imagen de contenedor Docker: ${IMAGE_NAME}:${BUILD_NUMBER}..."
                 sh "docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} -t ${IMAGE_NAME}:latest backend/"
@@ -89,6 +99,9 @@ pipeline {
         // ETAPA 4: DESPLIEGUE CONTINUO (CD) Y SMOKE TEST / HEALTHCHECK
         // =========================================================================
         stage('Despliegue Continuo (CD)') {
+            when {
+                branch 'main'
+            }
             steps {
                 echo "===> [ETAPA 4] Desplegando version ${IMAGE_NAME}:${BUILD_NUMBER} en puerto ${APP_PORT}..."
                 sh """
