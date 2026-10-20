@@ -112,7 +112,7 @@ stage('Publicacion en Nexus') {
                 echo '===> [ETAPA 4] Ejecutando Smoke Test / Healthcheck de disponibilidad HTTP...'
                 sh """
                     for i in {1..10}; do
-                        if curl -s -f http://localhost:${APP_PORT}/api/products; then
+                        if curl -s -f http://product-api-running:8080/api/products; then
                             echo "DESPLIEGUE EXITOSO: El microservicio responde correctamente en http://localhost:${APP_PORT}/api/products"
                             exit 0
                         fi
