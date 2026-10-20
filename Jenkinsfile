@@ -1,5 +1,5 @@
 pipeline {
-    agent
+    agent any
 
     environment {
         // Nombre del servidor SonarQube configurado en Administrar Jenkins -> System
