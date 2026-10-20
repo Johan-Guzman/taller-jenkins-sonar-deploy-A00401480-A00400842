@@ -99,31 +99,71 @@ stage('Publicacion en Nexus') {
         // =========================================================================
         // ETAPA 4: DESPLIEGUE CONTINUO (CD) Y SMOKE TEST / HEALTHCHECK
         // =========================================================================
-        stage('Despliegue Continuo (CD)') {
-            
-            steps {
-                echo "===> [ETAPA 4] Desplegando version ${IMAGE_NAME}:${BUILD_NUMBER} en puerto ${APP_PORT}..."
-                sh """
-                    docker stop product-api-running || true
-                    docker rm product-api-running || true
-                    docker run -d --name product-api-running --network cicl_network -p ${APP_PORT}:8080 ${IMAGE_NAME}:${BUILD_NUMBER}
-                """
+      
 
-                echo '===> [ETAPA 4] Ejecutando Smoke Test / Healthcheck de disponibilidad HTTP...'
-                sh """
-                    for i in {1..10}; do
-                        if curl -s -f --max-time 5 http://product-api-running:8080/api/products >/dev/null 2>&1; then
-                            echo "DESPLIEGUE EXITOSO: El microservicio responde correctamente en http://product-api-running:8080/api/products"
-                            exit 0
-                        fi
-                        echo "Esperando arranque del servicio... (intento \$i de 10)"
-                        sleep 3
-                    done
-                    echo "ERROR CRITICO: El microservicio no respondio a tiempo tras el despliegue."
-                    exit 1
-                """
-            }
-        }
+stage('Despliegue Continuo (CD)') {
+    steps {
+        echo "===> [ETAPA 4] Desplegando ${IMAGE_NAME}:${BUILD_NUMBER}..."
+
+        sh """
+            docker stop product-api-running || true
+            docker rm product-api-running || true
+
+            docker run -d \
+                --name product-api-running \
+                --network cicl_network \
+                -p ${APP_PORT}:8080 \
+                ${IMAGE_NAME}:${BUILD_NUMBER}
+
+            echo '=== ESTADO DEL CONTENEDOR ==='
+            docker ps -a --filter name=product-api-running
+        """
+
+        echo '===> [ETAPA 4] Smoke Test y diagnóstico'
+
+        sh '''
+            i=1
+
+            while [ "$i" -le 10 ]; do
+                echo "=== INTENTO $i DE 10 ==="
+
+                if curl -s -f --max-time 5 \
+                    http://product-api-running:8080/api/products \
+                    >/dev/null 2>&1; then
+                    echo "DESPLIEGUE EXITOSO: la API responde."
+                    exit 0
+                fi
+
+                echo "La API todavía no responde."
+                sleep 3
+                i=$((i + 1))
+            done
+
+            echo "========== DIAGNOSTICO DEL DESPLIEGUE =========="
+
+            echo "=== 1. ESTADO DEL CONTENEDOR ==="
+            docker ps -a --filter name=product-api-running || true
+
+            echo "=== 2. LOGS DE SPRING BOOT ==="
+            docker logs --timestamps --tail 200 product-api-running 2>&1 || true
+
+            echo "=== 3. INSPECCION DEL CONTENEDOR ==="
+            docker inspect product-api-running \
+                --format 'Estado={{.State.Status}} ExitCode={{.State.ExitCode}} Error={{.State.Error}}' \
+                2>&1 || true
+
+            echo "=== 4. PRUEBA HTTP DESDE JENKINS ==="
+            curl -v --max-time 10 \
+                http://product-api-running:8080/api/products \
+                2>&1 || true
+
+            echo "========== FIN DEL DIAGNOSTICO =========="
+            exit 1
+        '''
+    }
+}
+
+
     }
 
     post {
