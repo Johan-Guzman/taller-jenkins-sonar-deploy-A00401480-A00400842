@@ -11,6 +11,7 @@ pipeline {
         PROJECT_KEY = 'product-api'
         IMAGE_NAME = 'product-api'
         APP_PORT = '8085'
+        BRANCH_NAME = 'main'   
 
     }
    
