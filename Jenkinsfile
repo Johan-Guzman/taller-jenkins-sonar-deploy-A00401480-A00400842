@@ -1,10 +1,5 @@
 pipeline {
-    agent{
-        docker {
-            image 'maven:3.8.6-openjdk-17'
-            args '-v /var/run/docker.sock:/var/run/docker.sock'
-        }
-    }
+    agent
 
     environment {
         // Nombre del servidor SonarQube configurado en Administrar Jenkins -> System
