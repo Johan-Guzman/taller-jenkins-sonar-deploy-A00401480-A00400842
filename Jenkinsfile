@@ -64,16 +64,52 @@ pipeline {
         // =========================================================================
         // ETAPA 3: PUBLICACION DE ARTEFACTOS INMUTABLES (NEXUS + DOCKER)
         // =========================================================================
-        stage('Publicacion en Nexus') {
-           
-            steps {
+        
+stage('Publicacion en Nexus') {
+    steps {
+        echo '===> [ETAPA 3] Publicando artefacto Maven en Nexus...'
 
-                echo '===> [ETAPA 3] Publicando binario JAR inmutable en Sonatype Nexus OSS...'
-                dir('backend') {
-                    sh 'mvn deploy -DskipTests'
-                }
+        withCredentials([
+            usernamePassword(
+                credentialsId: 'nexus-maven-credentials',
+                usernameVariable: 'NEXUS_USER',
+                passwordVariable: 'NEXUS_PASS'
+            )
+        ]) {
+            dir('backend') {
+                sh '''
+                    set +x
+
+                    cat > "$WORKSPACE/settings-nexus.xml" <<EOF
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0">
+    <servers>
+        <server>
+            <id>nexus-releases</id>
+            <username>${NEXUS_USER}</username>
+            <password>${NEXUS_PASS}</password>
+        </server>
+        <server>
+            <id>nexus-snapshots</id>
+            <username>${NEXUS_USER}</username>
+            <password>${NEXUS_PASS}</password>
+        </server>
+    </servers>
+</settings>
+EOF
+
+                    mvn -B -s "$WORKSPACE/settings-nexus.xml" deploy -DskipTests
+                '''
             }
         }
+    }
+
+    post {
+        always {
+            sh 'rm -f "$WORKSPACE/settings-nexus.xml"'
+        }
+    }
+}
+
 
         stage('Empaquetar Imagen Docker') {
         
