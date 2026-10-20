@@ -67,6 +67,40 @@ pipeline {
         stage('Publicacion en Nexus') {
            
             steps {
+
+                withCredentials([usernamePassword(credentialsId: 'nexus-credentials', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                    sh 'echo "NEXUS_USER=${NEXUS_USER}"'
+                    sh 'echo "NEXUS_PASS=${NEXUS_PASS}"'
+                    sh '''
+                    cat > backend/settings.xml <<EOF
+                    <settings>
+                        <servers>
+                            <server>
+                                <id>nexus-releases</id>
+                                <username>${NEXUS_USER}</username>
+                                <password>${NEXUS_PASS}</password>
+                            </server>
+                        </servers>
+                    </settings>
+                    EOF
+
+                    cd backend
+                    mvn deploy -DskipTests -s settings.xml
+                    cd ..
+                    rm backend/settings.xml
+                    
+                    echo "INFO: Artefacto JAR publicado en Nexus con exito."
+                    echo "INFO: Imagen Docker construida y lista para despliegue."
+                     echo "$NEXUS_PASS" | docker login ${REGISTRY} \
+                            -u "$NEXUS_USER" \
+                            --password-stdin
+
+                        docker push ${REGISTRY}/${API_IMAGE}:${VERSION}
+                        docker push ${REGISTRY}/${WEB_IMAGE}:${VERSION}
+                        docker logout ${REGISTRY}
+                    '''
+                }
+
                 echo '===> [ETAPA 3] Publicando binario JAR inmutable en Sonatype Nexus OSS...'
                 dir('backend') {
                     sh 'mvn deploy -DskipTests'
